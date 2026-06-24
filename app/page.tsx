@@ -10,66 +10,77 @@ export default function Home() {
   const [profileUrl, setProfileUrl] = useState("");
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
-        <h1 className="text-4xl font-bold mb-2">
+    <main className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
+      <div className="bg-white text-black p-10 rounded-3xl shadow-2xl w-full max-w-xl">
+        <h1 className="text-5xl font-extrabold text-gray-900 mb-4">
           🎮 Steam Backlog Intelligence
         </h1>
 
-        <p className="text-gray-600 mb-6">
-          Analyze your Steam profile
+        <p className="text-lg text-gray-600 mb-8">
+          Analyze your Steam profile and discover your gaming habits.
         </p>
 
         <input
           type="text"
-          placeholder="Enter Steam ID"
+          placeholder="Enter Steam64 ID"
           value={steamId}
           onChange={(e) => setSteamId(e.target.value)}
-          className="w-full border rounded-lg p-3 mb-4"
+          className="w-full border border-gray-300 rounded-xl p-4 text-lg mb-4 focus:outline-none focus:ring-2 focus:ring-gray-800"
         />
 
         <button
           onClick={async () => {
+            if (!steamId.trim()) return;
+
             setLoading(true);
 
-            const response = await fetch(
-              `/api/steam?steamId=${steamId}`
-            );
+            try {
+              const response = await fetch(
+                `/api/steam?steamId=${steamId}`
+              );
 
-            const data = await response.json();
+              const data = await response.json();
 
-            setPlayerName(data.username);
-            setAvatar(data.avatar);
-            setProfileUrl(data.profile);
-
-            setLoading(false);
+              setPlayerName(data.username);
+              setAvatar(data.avatar);
+              setProfileUrl(data.profile);
+            } catch (error) {
+              console.error(error);
+            } finally {
+              setLoading(false);
+            }
           }}
-          className="w-full bg-black text-white p-3 rounded-lg hover:opacity-90"
+          className="w-full bg-gray-900 text-white p-4 rounded-xl text-lg font-semibold hover:bg-gray-800 transition duration-200"
         >
           {loading ? "Analyzing..." : "Analyze"}
         </button>
 
         {playerName && (
-  <div className="mt-6 border rounded-lg p-4">
-    <img
-      src={avatar}
-      alt="Avatar"
-      className="w-20 h-20 rounded-full mx-auto mb-4"
-    />
+          <div className="mt-8 border border-gray-200 rounded-2xl p-6 shadow-sm">
+            <img
+              src={avatar}
+              alt="Steam Avatar"
+              className="w-24 h-24 rounded-full mx-auto border-4 border-gray-200"
+            />
 
-    <h2 className="text-xl font-bold text-center">
-      {playerName}
-    </h2>
+            <h2 className="text-2xl font-bold text-center text-gray-900 mt-4">
+              {playerName}
+            </h2>
 
-    <a
-      href={profileUrl}
-      target="_blank"
-      className="block text-center mt-2 text-blue-600"
-    >
-      View Steam Profile
-    </a>
-  </div>
-)}
+            <p className="text-center text-gray-500 mt-1">
+              Steam Profile
+            </p>
+
+            <a
+              href={profileUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block text-center mt-4 text-blue-600 hover:text-blue-700 font-medium"
+            >
+              View Steam Profile →
+            </a>
+          </div>
+        )}
       </div>
     </main>
   );
