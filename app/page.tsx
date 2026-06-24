@@ -17,8 +17,11 @@ export default function Home() {
       />
 
 <button
-  onClick={() => {
-    alert(`Steam ID entered: ${steamId}`);
+  onClick={async () => {
+    const response = await fetch("/api/steam");
+    const data = await response.json();
+
+    alert(data.message);
   }}
 >
   Analyze
