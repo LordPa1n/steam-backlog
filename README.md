@@ -1,36 +1,92 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎮 Steam Backlog
 
-## Getting Started
+A modern web application that helps Steam gamers visualize, organize, and prioritize their game library. Simply enter your Steam ID to instantly view your owned games, track backlog statistics, and discover what to play next.
 
-First, run the development server:
+## ✨ Features
+
+### Current Features
+
+* 🔍 Steam profile lookup using Steam ID
+* 👤 Display Steam profile information and avatar
+* 🎮 Fetch and display owned Steam games
+* 📊 Game library statistics
+* 🎯 Steam Input support detection
+* 🎮 Controller support indicators
+* 🔗 Direct links to Steam store pages
+* 📱 Responsive design for desktop and mobile
+
+### Planned Features
+
+* ⭐ Game rating system
+* 🏷️ Custom tags and categories
+* 🎯 Backlog prioritization
+* 📈 Advanced gaming statistics
+* ⏱️ Playtime insights and recommendations
+* 🔍 Powerful filtering and sorting
+* 💾 Save custom backlog lists
+* 🎲 "What Should I Play Next?" recommendation engine
+* HowLongToBeat Integration
+
+## 🚀 Live Demo
+
+Visit the live application: https://steam-backlog-delta.vercel.app/
+
+## 🛠️ Tech Stack
+
+* **Frontend:** Next.js 15, React, TypeScript
+* **Styling:** Tailwind CSS
+* **API:** Steam Web API
+* **Hosting:** Vercel
+
+## 🎯 Why Steam Backlog?
+
+Many Steam users own hundreds of games but struggle to decide what to play next. Steam Backlog helps gamers:
+
+* Visualize their entire library
+* Identify controller-friendly games
+* Discover forgotten titles
+* Make informed gaming decisions
+* Reduce backlog overwhelm
+
+## 📦 Installation
 
 ```bash
+git clone https://github.com/yourusername/steam-backlog.git
+cd steam-backlog
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000 in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🔑 Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Create a `.env.local` file:
 
-## Learn More
+```env
+STEAM_API_KEY=your_steam_api_key
+```
 
-To learn more about Next.js, take a look at the following resources:
+## 🗺️ Roadmap
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+* [x] Steam library integration
+* [x] Profile information display
+* [x] Controller support detection
+* [ ] Game completion tracking
+* [ ] Backlog management system
+* [ ] User accounts
+* [ ] Recommendation engine
+* [ ] Achievement analytics
+* [ ] Wishlist integration
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🤝 Contributing
 
-## Deploy on Vercel
+Contributions, issues, and feature requests are welcome.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 📄 License
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT License
+
+---
+
+Built for gamers who have more games than time.
