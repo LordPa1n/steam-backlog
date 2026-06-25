@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import steamOracleLogo from "@/steam_oracle_logo.png";
 
 type SteamProfile = {
@@ -343,6 +344,23 @@ function ProfileResults({ profile }: { profile: SteamProfile }) {
           </p>
         </div>
       </div>
+
+      {profile.visibility !== 3 || profile.gamesOwned === null ? (
+        <div className="mt-8 rounded-2xl border border-pastel-rose/35 bg-pastel-rose/10 p-4 text-sm text-pastel-rose ring-1 ring-pastel-rose/20">
+          <p className="font-semibold">Backlog analysis unavailable</p>
+          <p className="mt-2 text-pastel-rose/90">
+            Steam backlog analysis requires a public profile and a visible game
+            library.
+          </p>
+        </div>
+      ) : (
+        <Link
+          href={`/backlog/${profile.steamId}`}
+          className="mt-8 inline-flex w-full items-center justify-center rounded-2xl border border-pastel-mint/40 bg-gradient-to-r from-pastel-mint/85 to-pastel-sky/80 px-5 py-4 text-base font-black text-[#181b1f] shadow-lg shadow-pastel-mint/10 transition hover:from-pastel-mint hover:to-pastel-sky hover:shadow-pastel-sky/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pastel-peach/50"
+        >
+          Analyze Backlog
+        </Link>
+      )}
     </section>
   );
 }
