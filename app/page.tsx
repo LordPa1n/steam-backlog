@@ -423,7 +423,7 @@ export default function Home() {
                 htmlFor="steam-id"
                 className="text-sm font-semibold text-pastel-lavender/90"
               >
-                🔍 Steam URL, SteamID64, or username
+                🔍 Steam profile URL, custom URL handle, or SteamID64
               </label>
               <input
                 id="steam-id"
@@ -441,7 +441,7 @@ export default function Home() {
                 <ul className="mt-2 grid gap-1 sm:grid-cols-2 lg:grid-cols-1">
                   <li>Steam Custom URL</li>
                   <li>SteamID64 URL</li>
-                  <li>Steam Username</li>
+                  <li>Custom URL Handle</li>
                   <li>SteamID64</li>
                 </ul>
               </div>
