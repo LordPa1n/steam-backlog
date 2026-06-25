@@ -118,7 +118,7 @@ const statCardSurface =
   "rounded-2xl border border-white/10 bg-gradient-to-br from-[#24282d]/90 to-[#181b1f]/90 p-4 shadow-lg shadow-black/15 ring-1 ring-white/5 transition hover:border-pastel-peach/30 hover:shadow-pastel-peach/10";
 
 const detailCardSurface =
-  "rounded-2xl border border-white/10 bg-[#202429]/65 p-4 ring-1 ring-white/5";
+  "flex min-h-24 flex-col rounded-2xl border border-white/10 bg-[#202429]/65 p-4 ring-1 ring-white/5";
 
 function CopyIcon() {
   return (
@@ -176,7 +176,7 @@ function CopySteamIdButton({ steamId }: { steamId: string }) {
       onClick={handleCopy}
       aria-label={copied ? "Steam ID copied" : "Copy Steam ID to clipboard"}
       title={copied ? "Copied!" : "Copy to clipboard"}
-      className="inline-flex shrink-0 items-center justify-center rounded-xl border border-pastel-sky/25 bg-pastel-sky/10 p-2 text-pastel-sky transition hover:border-pastel-mint/40 hover:bg-pastel-mint/15 hover:text-pastel-mint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pastel-peach/40"
+      className="pointer-events-none inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-pastel-sky/20 bg-pastel-sky/10 text-pastel-sky opacity-0 transition hover:border-pastel-mint/40 hover:bg-pastel-mint/15 hover:text-pastel-mint focus-visible:pointer-events-auto focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pastel-peach/40 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100"
     >
       {copied ? <CheckIcon /> : <CopyIcon />}
     </button>
@@ -314,15 +314,15 @@ function ProfileResults({ profile }: { profile: SteamProfile }) {
         </div>
       </div>
 
-      <div className="mt-8 grid gap-3 text-sm sm:grid-cols-2">
-        <div className={detailCardSurface}>
-          <div className="flex items-center justify-between gap-2">
-            <p className="font-semibold text-pastel-lavender/80">🔑 Steam ID</p>
+      <div className="mt-8 grid auto-rows-fr gap-3 text-sm sm:grid-cols-2">
+        <div className={`group ${detailCardSurface}`}>
+          <p className="font-semibold text-pastel-lavender/80">🔑 Steam ID</p>
+          <div className="mt-2 flex items-start justify-between gap-2 leading-5">
+            <p className="min-w-0 break-all font-mono text-sm leading-5 text-pastel-cream/90">
+              {profile.steamId}
+            </p>
             <CopySteamIdButton steamId={profile.steamId} />
           </div>
-          <p className="mt-2 break-all font-mono text-sm text-pastel-cream/90">
-            {profile.steamId}
-          </p>
         </div>
         <div className={detailCardSurface}>
           <p className="font-semibold text-pastel-lavender/80">📅 Member Since</p>
