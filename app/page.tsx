@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import Image from "next/image";
+import steamOracleLogo from "@/steam_oracle_logo.png";
 
 type SteamProfile = {
   username: string;
@@ -111,28 +112,94 @@ function formatNumber(value: number | null) {
 }
 
 const cardSurface =
-  "rounded-3xl border border-white/10 bg-zinc-950/60 shadow-2xl shadow-black/40 ring-1 ring-white/5 backdrop-blur-xl";
+  "rounded-3xl border border-white/10 bg-[#181b1f]/80 shadow-2xl shadow-black/25 ring-1 ring-pastel-sky/10 backdrop-blur-xl";
 
 const statCardSurface =
-  "rounded-2xl border border-white/10 bg-gradient-to-br from-zinc-900/90 to-zinc-950/90 p-4 shadow-lg shadow-black/20 ring-1 ring-white/5 transition hover:border-cyan-400/20 hover:shadow-cyan-950/20";
+  "rounded-2xl border border-white/10 bg-gradient-to-br from-[#24282d]/90 to-[#181b1f]/90 p-4 shadow-lg shadow-black/15 ring-1 ring-white/5 transition hover:border-pastel-peach/30 hover:shadow-pastel-peach/10";
+
+const detailCardSurface =
+  "rounded-2xl border border-white/10 bg-[#202429]/65 p-4 ring-1 ring-white/5";
+
+function CopyIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-4 w-4"
+      aria-hidden
+    >
+      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-4 w-4"
+      aria-hidden
+    >
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
+  );
+}
+
+function CopySteamIdButton({ steamId }: { steamId: string }) {
+  const [copied, setCopied] = useState(false);
+
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(steamId);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      aria-label={copied ? "Steam ID copied" : "Copy Steam ID to clipboard"}
+      title={copied ? "Copied!" : "Copy to clipboard"}
+      className="inline-flex shrink-0 items-center justify-center rounded-xl border border-pastel-sky/25 bg-pastel-sky/10 p-2 text-pastel-sky transition hover:border-pastel-mint/40 hover:bg-pastel-mint/15 hover:text-pastel-mint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pastel-peach/40"
+    >
+      {copied ? <CheckIcon /> : <CopyIcon />}
+    </button>
+  );
+}
 
 function ResultSkeleton() {
   return (
     <section className={`h-full p-6 sm:p-8 ${cardSurface}`}>
       <div className="animate-pulse">
         <div className="flex items-center gap-4">
-          <div className="h-20 w-20 rounded-2xl bg-zinc-800" />
+          <div className="h-20 w-20 rounded-2xl bg-pastel-lavender/10" />
           <div className="min-w-0 flex-1 space-y-3">
-            <div className="h-6 w-2/3 rounded-full bg-zinc-800" />
-            <div className="h-4 w-1/2 rounded-full bg-zinc-800" />
+            <div className="h-6 w-2/3 rounded-full bg-pastel-lavender/10" />
+            <div className="h-4 w-1/2 rounded-full bg-pastel-lavender/10" />
           </div>
         </div>
 
         <div className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
           {[0, 1, 2, 3].map((item) => (
             <div key={item} className={`${statCardSurface}`}>
-              <div className="h-4 w-20 rounded-full bg-zinc-800" />
-              <div className="mt-3 h-7 w-16 rounded-full bg-zinc-800" />
+              <div className="h-4 w-20 rounded-full bg-pastel-lavender/10" />
+              <div className="mt-3 h-7 w-16 rounded-full bg-pastel-lavender/10" />
             </div>
           ))}
         </div>
@@ -141,10 +208,10 @@ function ResultSkeleton() {
           {[0, 1, 2, 3].map((item) => (
             <div
               key={item}
-              className="rounded-2xl border border-white/10 bg-black/20 p-4"
+              className="rounded-2xl border border-white/10 bg-[#202429]/45 p-4"
             >
-              <div className="h-4 w-28 rounded-full bg-zinc-800" />
-              <div className="mt-3 h-4 w-40 rounded-full bg-zinc-800" />
+              <div className="h-4 w-28 rounded-full bg-pastel-lavender/10" />
+              <div className="mt-3 h-4 w-40 rounded-full bg-pastel-lavender/10" />
             </div>
           ))}
         </div>
@@ -156,17 +223,17 @@ function ResultSkeleton() {
 function EmptyResults() {
   return (
     <section
-      className={`flex h-full min-h-[26rem] items-center justify-center border-dashed border-cyan-400/20 p-8 text-center ${cardSurface}`}
+      className={`flex h-full min-h-[26rem] items-center justify-center border-dashed border-pastel-lavender/25 p-8 text-center ${cardSurface}`}
     >
       <div>
         <p className="text-3xl">🔮</p>
-        <p className="mt-4 text-sm font-semibold uppercase tracking-wider text-cyan-300">
+        <p className="mt-4 text-sm font-semibold uppercase tracking-wider text-pastel-peach">
           Ready
         </p>
-        <h2 className="mt-3 text-2xl font-bold text-white">
+        <h2 className="mt-3 text-2xl font-bold text-pastel-cream">
           Profile results appear here
         </h2>
-        <p className="mt-3 max-w-sm text-sm leading-6 text-zinc-400">
+        <p className="mt-3 max-w-sm text-sm leading-6 text-pastel-lavender/70">
           Search a Steam profile to see account age, level, game count, identity,
           region, and visibility without losing the form above the fold.
         </p>
@@ -190,83 +257,86 @@ function ProfileResults({ profile }: { profile: SteamProfile }) {
             alt={`${profile.username}'s avatar`}
             width={96}
             height={96}
-            className="h-24 w-24 rounded-2xl border border-white/10 object-cover shadow-lg shadow-cyan-950/30 ring-2 ring-cyan-400/20"
+            className="h-24 w-24 rounded-2xl border border-pastel-peach/25 object-cover shadow-lg shadow-pastel-peach/10 ring-2 ring-pastel-peach/20"
           />
         )}
 
-        <div className="min-w-0">
-          <p className="text-sm font-semibold uppercase tracking-wider text-cyan-300">
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold uppercase tracking-wider text-pastel-peach">
             👤 Steam Profile
           </p>
-          <h2 className="mt-2 truncate text-3xl font-black text-white">
+          <h2 className="mt-2 truncate text-3xl font-black text-pastel-cream">
             {profile.username}
           </h2>
           <a
             href={profile.profile}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-emerald-300 transition hover:text-emerald-200"
+            className="mt-3 inline-flex items-center gap-2 rounded-2xl border border-pastel-peach/30 bg-gradient-to-r from-pastel-peach/25 to-pastel-rose/20 px-4 py-2.5 text-sm font-semibold text-pastel-cream shadow-md shadow-pastel-peach/10 transition hover:border-pastel-peach/50 hover:from-pastel-peach/35 hover:to-pastel-rose/30 hover:shadow-pastel-peach/20"
           >
-            <span>🔗</span> View Steam Profile
+            View Steam Profile
           </a>
         </div>
       </div>
 
       <div className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <div className={statCardSurface}>
-          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+          <p className="text-xs font-semibold uppercase tracking-wider text-pastel-lavender/80">
             🎂 Age
           </p>
-          <p className="mt-2 whitespace-nowrap text-xl font-black tabular-nums text-white sm:text-2xl">
+          <p className="mt-2 whitespace-nowrap text-xl font-black tabular-nums text-pastel-cream sm:text-2xl">
             {getAccountAge(profile.created)}
           </p>
         </div>
         <div className={statCardSurface}>
-          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+          <p className="text-xs font-semibold uppercase tracking-wider text-pastel-lavender/80">
             ⭐ Level
           </p>
-          <p className="mt-2 text-xl font-black tabular-nums text-white sm:text-2xl">
+          <p className="mt-2 text-xl font-black tabular-nums text-pastel-cream sm:text-2xl">
             {formatNumber(profile.level)}
           </p>
         </div>
         <div className={statCardSurface}>
-          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+          <p className="text-xs font-semibold uppercase tracking-wider text-pastel-lavender/80">
             🎮 Games
           </p>
-          <p className="mt-2 text-xl font-black tabular-nums text-white sm:text-2xl">
+          <p className="mt-2 text-xl font-black tabular-nums text-pastel-cream sm:text-2xl">
             {formatNumber(profile.gamesOwned)}
           </p>
         </div>
         <div className={statCardSurface}>
-          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+          <p className="text-xs font-semibold uppercase tracking-wider text-pastel-lavender/80">
             {visibilityEmoji} Visibility
           </p>
-          <p className="mt-2 text-xl font-black text-white sm:text-2xl">
+          <p className="mt-2 text-xl font-black text-pastel-cream sm:text-2xl">
             {visibilityText}
           </p>
         </div>
       </div>
 
-      <div className="mt-8 grid gap-3 text-sm text-zinc-300 sm:grid-cols-2">
-        <div className="rounded-2xl border border-white/10 bg-black/25 p-4 ring-1 ring-white/5">
-          <p className="font-semibold text-zinc-400">🔑 Steam ID</p>
-          <p className="mt-2 break-all font-mono text-zinc-200">
+      <div className="mt-8 grid gap-3 text-sm sm:grid-cols-2">
+        <div className={detailCardSurface}>
+          <div className="flex items-center justify-between gap-2">
+            <p className="font-semibold text-pastel-lavender/80">🔑 Steam ID</p>
+            <CopySteamIdButton steamId={profile.steamId} />
+          </div>
+          <p className="mt-2 break-all font-mono text-sm text-pastel-cream/90">
             {profile.steamId}
           </p>
         </div>
-        <div className="rounded-2xl border border-white/10 bg-black/25 p-4 ring-1 ring-white/5">
-          <p className="font-semibold text-zinc-400">📅 Member Since</p>
-          <p className="mt-2 text-zinc-200">{formatDate(profile.created)}</p>
+        <div className={detailCardSurface}>
+          <p className="font-semibold text-pastel-lavender/80">📅 Member Since</p>
+          <p className="mt-2 text-pastel-cream/90">{formatDate(profile.created)}</p>
         </div>
-        <div className="rounded-2xl border border-white/10 bg-black/25 p-4 ring-1 ring-white/5">
-          <p className="font-semibold text-zinc-400">🌍 Country</p>
-          <p className="mt-2 text-zinc-200">
+        <div className={detailCardSurface}>
+          <p className="font-semibold text-pastel-lavender/80">🌍 Country</p>
+          <p className="mt-2 text-pastel-cream/90">
             {profile.country ? `${flag} ${profile.country}` : "Unknown"}
           </p>
         </div>
-        <div className="rounded-2xl border border-white/10 bg-black/25 p-4 ring-1 ring-white/5">
-          <p className="font-semibold text-zinc-400">📚 Owned Games</p>
-          <p className="mt-2 text-zinc-200">
+        <div className={detailCardSurface}>
+          <p className="font-semibold text-pastel-lavender/80">📚 Owned Games</p>
+          <p className="mt-2 text-pastel-cream/90">
             {profile.gamesOwned === null
               ? "Private or unavailable"
               : `${formatNumber(profile.gamesOwned)} games`}
@@ -325,16 +395,14 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,#0e7490_0%,#312e81_22%,#18181b_48%,#09090b_100%)] px-4 py-8 text-white sm:px-6 sm:py-10">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top,#31373d_0%,#24282d_35%,#181b1f_70%,#111315_100%)] px-4 py-8 text-pastel-cream sm:px-6 sm:py-10">
       <div className="mx-auto w-full max-w-6xl">
         <header className="mb-8 flex justify-center sm:mb-10">
           <Image
-            src="/steam_oracle_logo.png"
+            src={steamOracleLogo}
             alt="Steam Oracle"
-            width={2720}
-            height={1280}
             priority
-            className="h-auto w-56 sm:w-72 md:w-80"
+            className="h-auto w-72 sm:w-80 md:w-96 lg:w-[22rem]"
           />
         </header>
 
@@ -342,10 +410,10 @@ export default function Home() {
           <section
             className={`p-6 sm:p-8 lg:sticky lg:top-8 lg:self-start ${cardSurface}`}
           >
-            <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
+            <h1 className="text-3xl font-black tracking-tight text-pastel-cream sm:text-4xl">
               Know your Steam profile at a glance
             </h1>
-            <p className="mt-4 text-base leading-7 text-zinc-400">
+            <p className="mt-4 text-base leading-7 text-pastel-lavender/75">
               Discover your gaming identity, account history, Steam level,
               library size, and profile visibility.
             </p>
@@ -353,7 +421,7 @@ export default function Home() {
             <form onSubmit={handleSubmit} className="mt-8">
               <label
                 htmlFor="steam-id"
-                className="text-sm font-semibold text-zinc-300"
+                className="text-sm font-semibold text-pastel-lavender/90"
               >
                 🔍 Steam URL, SteamID64, or username
               </label>
@@ -363,11 +431,11 @@ export default function Home() {
                 placeholder="steamcommunity.com/id/example"
                 value={steamId}
                 onChange={(event) => setSteamId(event.target.value)}
-                className="mt-3 w-full rounded-2xl border border-white/10 bg-black/40 p-4 text-base text-white shadow-inner shadow-black/20 outline-none transition focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-400/25"
+                className="mt-3 w-full rounded-2xl border border-white/10 bg-[#202429]/80 p-4 text-base text-pastel-cream shadow-inner shadow-black/10 outline-none transition placeholder:text-pastel-lavender/35 focus:border-pastel-peach/45 focus:ring-2 focus:ring-pastel-peach/20"
               />
 
-              <div className="mt-4 rounded-2xl border border-white/10 bg-black/25 p-4 text-sm text-zinc-500 ring-1 ring-white/5">
-                <p className="font-semibold text-zinc-300">
+              <div className="mt-4 rounded-2xl border border-white/10 bg-[#202429]/55 p-4 text-sm text-pastel-lavender/60 ring-1 ring-white/5">
+                <p className="font-semibold text-pastel-lavender/90">
                   📋 Supported formats
                 </p>
                 <ul className="mt-2 grid gap-1 sm:grid-cols-2 lg:grid-cols-1">
@@ -381,14 +449,14 @@ export default function Home() {
               <button
                 type="submit"
                 disabled={loading || !steamId.trim()}
-                className="mt-5 w-full rounded-2xl bg-gradient-to-r from-cyan-500 to-violet-500 p-4 text-base font-bold text-white shadow-lg shadow-cyan-950/40 transition hover:from-cyan-400 hover:to-violet-400 disabled:cursor-not-allowed disabled:from-zinc-700 disabled:to-zinc-700 disabled:text-zinc-400 disabled:shadow-none"
+                className="mt-5 w-full rounded-2xl border border-pastel-peach/35 bg-gradient-to-r from-pastel-peach/80 to-pastel-sky/75 p-4 text-base font-bold text-[#181b1f] shadow-lg shadow-pastel-peach/15 transition hover:from-pastel-peach hover:to-pastel-sky disabled:cursor-not-allowed disabled:border-transparent disabled:from-[#24282d] disabled:to-[#24282d] disabled:text-pastel-lavender/40 disabled:shadow-none"
               >
                 {loading ? "Fetching Steam Data..." : "✨ Analyze Profile"}
               </button>
             </form>
 
             {error && (
-              <div className="mt-4 rounded-2xl border border-red-500/30 bg-red-950/40 p-4 text-sm text-red-200 ring-1 ring-red-500/20">
+              <div className="mt-4 rounded-2xl border border-pastel-rose/35 bg-pastel-rose/10 p-4 text-sm text-pastel-rose ring-1 ring-pastel-rose/20">
                 ⚠️ {error}
               </div>
             )}

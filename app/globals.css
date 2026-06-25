@@ -3,6 +3,13 @@
 @theme inline {
   --font-sans: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+
+  --color-pastel-peach: #ffc9a8;
+  --color-pastel-lavender: #d7dee8;
+  --color-pastel-mint: #b8f0dc;
+  --color-pastel-sky: #b8e4ff;
+  --color-pastel-rose: #ffc8dd;
+  --color-pastel-cream: #f4f1ea;
 }
 
 body {
