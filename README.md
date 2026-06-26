@@ -14,15 +14,16 @@ A modern web application that helps Steam gamers visualize, organize, and priori
 * 🎮 Controller support indicators
 * 🔗 Direct links to Steam store pages
 * 📱 Responsive design for desktop and mobile
-
-### Planned Features
-
 * ⭐ Game rating system
 * 🏷️ Custom tags and categories
-* 🎯 Backlog prioritization
 * 📈 Advanced gaming statistics
 * ⏱️ Playtime insights and recommendations
 * 🔍 Powerful filtering and sorting
+
+### Planned Features
+
+* Steam OpenID Login & Syncing with DB
+* 🎯 Backlog prioritization
 * 💾 Save custom backlog lists
 * 🎲 "What Should I Play Next?" recommendation engine
 * HowLongToBeat Integration
@@ -75,8 +76,8 @@ STEAM_API_KEY=your_steam_api_key
 * [ ] Game completion tracking
 * [ ] Backlog management system
 * [ ] User accounts
-* [ ] Recommendation engine
-* [ ] Achievement analytics
+* [x] Recommendation engine
+* [x] Achievement analytics
 * [ ] Wishlist integration
 
 ## 🤝 Contributing
