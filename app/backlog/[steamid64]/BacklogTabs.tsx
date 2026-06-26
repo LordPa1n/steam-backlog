@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type GameRow = {
   appid: number;
@@ -24,6 +24,7 @@ const tabs = ["Overview", "Unplayed", "Started", "Completed"] as const;
 
 type Tab = (typeof tabs)[number];
 type SortKey = "recommended" | "name" | "playtime-desc" | "playtime-asc" | "hours";
+const ITEMS_PER_PAGE = 10;
 
 function GameIdentity({ game }: { game: GameRow }) {
   return (
@@ -206,6 +207,119 @@ function StartedList({ games }: { games: GameRow[] }) {
   );
 }
 
+function PaginationControls({
+  currentPage,
+  totalPages,
+  onPageChange,
+}: {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}) {
+  if (totalPages <= 1) return null;
+
+  const pageItems: Array<number | "ellipsis"> = [];
+  const createRange = (start: number, end: number) => {
+    for (let i = start; i <= end; i += 1) {
+      pageItems.push(i);
+    }
+  };
+
+  pageItems.push(1);
+
+  if (currentPage > 4) {
+    pageItems.push("ellipsis");
+  }
+
+  const start = Math.max(2, currentPage - 1);
+  const end = Math.min(totalPages - 1, currentPage + 1);
+  createRange(start, end);
+
+  if (currentPage < totalPages - 3) {
+    pageItems.push("ellipsis");
+  }
+
+  if (totalPages > 1) {
+    pageItems.push(totalPages);
+  }
+
+  return (
+    <div className="flex flex-wrap items-center justify-center gap-2 mt-6 mb-4">
+      <button
+        type="button"
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-sm font-medium text-pastel-cream transition hover:bg-white/10 ${
+          currentPage === 1
+            ? "cursor-not-allowed opacity-40"
+            : "hover:border-pastel-sky/30"
+        }`}
+        aria-label="Previous page"
+      >
+        ←
+      </button>
+
+      {pageItems.map((item, index) =>
+        item === "ellipsis" ? (
+          <span
+            key={`ellipsis-${index}`}
+            className="inline-flex h-9 items-center justify-center rounded-lg px-2 text-sm text-pastel-lavender/60"
+          >
+            …
+          </span>
+        ) : (
+          <button
+            key={item}
+            type="button"
+            onClick={() => onPageChange(item)}
+            className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border text-sm font-medium transition ${
+              item === currentPage
+                ? "bg-pastel-peach text-[#181b1f]"
+                : "border-white/10 bg-white/5 text-pastel-cream hover:border-pastel-sky/30 hover:bg-white/10"
+            }`}
+          >
+            {item}
+          </button>
+        )
+      )}
+
+      <button
+        type="button"
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-sm font-medium text-pastel-cream transition hover:bg-white/10 ${
+          currentPage === totalPages
+            ? "cursor-not-allowed opacity-40"
+            : "hover:border-pastel-sky/30"
+        }`}
+        aria-label="Next page"
+      >
+        →
+      </button>
+    </div>
+  );
+}
+
+function LoadingSkeleton() {
+  return (
+    <div className="space-y-3 animate-pulse">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div
+          key={i}
+          className="flex items-center gap-4 rounded-xl bg-white/5 p-4"
+        >
+          <div className="h-12 w-12 rounded-lg bg-white/10" />
+          <div className="flex-1 space-y-2">
+            <div className="h-4 w-3/5 rounded bg-white/10" />
+            <div className="h-3 w-2/5 rounded bg-white/8" />
+          </div>
+          <div className="h-8 w-16 rounded-lg bg-white/10" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function CompletedTable({ games }: { games: GameRow[] }) {
   if (games.length === 0) {
     return (
@@ -250,16 +364,22 @@ export default function BacklogTabs({
   const [query, setQuery] = useState("");
   const [genre, setGenre] = useState("All");
   const [sort, setSort] = useState<SortKey>("recommended");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isPageLoading, setIsPageLoading] = useState(false);
+  const gameListRef = useRef<HTMLDivElement>(null);
+
   const activeGames =
     activeTab === "Completed"
       ? completedGames
       : activeTab === "Started"
         ? startedGames
         : unplayedGames;
+
   const genreOptions = useMemo(
     () => ["All", ...Array.from(new Set(activeGames.map((game) => game.genre))).sort()],
     [activeGames]
   );
+
   const visibleGames = useMemo(
     () =>
       filterAndSortGames({
@@ -270,7 +390,30 @@ export default function BacklogTabs({
       }),
     [activeGames, genre, query, sort]
   );
-  const shownGames = visibleGames.slice(0, 60);
+
+  const totalPages = Math.max(1, Math.ceil(visibleGames.length / ITEMS_PER_PAGE));
+  const pageStart = (currentPage - 1) * ITEMS_PER_PAGE;
+  const pageEnd = currentPage * ITEMS_PER_PAGE;
+  const shownGames = visibleGames.slice(pageStart, pageEnd);
+
+  useEffect(() => {
+    setCurrentPage(1);
+    setIsPageLoading(false);
+  }, [activeTab, genre, query, sort]);
+
+  const handlePageChange = (page: number) => {
+    if (page < 1 || page > totalPages || page === currentPage) return;
+    setIsPageLoading(true);
+    setCurrentPage(page);
+    window.setTimeout(() => setIsPageLoading(false), 300);
+
+    if (gameListRef.current) {
+      gameListRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
+  const visibleStart = visibleGames.length === 0 ? 0 : pageStart + 1;
+  const visibleEnd = visibleGames.length === 0 ? 0 : pageStart + shownGames.length;
 
   return (
     <section className="mt-8">
@@ -308,13 +451,47 @@ export default function BacklogTabs({
               setSort={setSort}
             />
             <p className="mb-3 text-sm text-pastel-lavender/65">
-              Showing {shownGames.length} of {visibleGames.length} matching games
+              Showing {visibleStart}–{visibleEnd} of {visibleGames.length} matching games
             </p>
           </>
         )}
-        {activeTab === "Unplayed" && <GameTable games={shownGames} />}
-        {activeTab === "Started" && <StartedList games={shownGames} />}
-        {activeTab === "Completed" && <CompletedTable games={shownGames} />}
+        {activeTab === "Unplayed" &&
+          (isPageLoading ? (
+            <div ref={gameListRef}>
+              <LoadingSkeleton />
+            </div>
+          ) : (
+            <div ref={gameListRef}>
+              <GameTable games={shownGames} />
+            </div>
+          ))}
+        {activeTab === "Started" &&
+          (isPageLoading ? (
+            <div ref={gameListRef}>
+              <LoadingSkeleton />
+            </div>
+          ) : (
+            <div ref={gameListRef}>
+              <StartedList games={shownGames} />
+            </div>
+          ))}
+        {activeTab === "Completed" &&
+          (isPageLoading ? (
+            <div ref={gameListRef}>
+              <LoadingSkeleton />
+            </div>
+          ) : (
+            <div ref={gameListRef}>
+              <CompletedTable games={shownGames} />
+            </div>
+          ))}
+        {activeTab !== "Overview" && (
+          <PaginationControls
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        )}
       </div>
     </section>
   );

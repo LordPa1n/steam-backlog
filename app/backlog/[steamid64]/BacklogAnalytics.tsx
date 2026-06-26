@@ -33,6 +33,37 @@ export default function BacklogAnalytics({
     .sort((a, b) => b.achievementPercent - a.achievementPercent)
     .slice(0, 3);
 
+  const genreEmojiMap: Record<string, string> = {
+    Puzzle: "🧩 Puzzle",
+    Horror: "👻 Horror",
+    Sports: "⚽ Sports",
+    Adventure: "🗺️ Adventure",
+    Action: "💥 Action",
+    RPG: "⚔️ RPG",
+    Shooter: "🔫 Shooter",
+    Strategy: "♟️ Strategy",
+    Simulation: "🏗️ Simulation",
+    Racing: "🏎️ Racing",
+    Roguelike: "🎲 Roguelike",
+    Story: "📖 Story",
+  };
+
+  const playstyleEmojiMap: Record<string, string> = {
+    Competitive: "🏆 Competitive",
+    Sandbox: "🏖️ Sandbox",
+    Survival: "🏕️ Survival",
+    Soulslike: "⚰️ Soulslike",
+    Casual: "🎈 Casual",
+    "Open World": "🌍 Open World",
+    "Story Rich": "📚 Story Rich",
+    "Co-op": "🤝 Co-op",
+    Multiplayer: "👥 Multiplayer",
+    Exploration: "🧭 Exploration",
+  };
+
+  const getGenreLabel = (genre: string) => genreEmojiMap[genre] ?? genre;
+  const getPlaystyleLabel = (playstyle: string) => playstyleEmojiMap[playstyle] ?? playstyle;
+
   const genres = getBreakdownCounts(games.map((game) => game.genre));
   const playstyles = getBreakdownCounts(games.flatMap((game) => game.categories));
   const deckFriendlyCount = games.filter((game) => game.deckVerified).length;
@@ -82,7 +113,6 @@ export default function BacklogAnalytics({
           variant="deck"
           progress={deckProgress}
           progressLabel={`${deckFriendlyCount}/${totalGames}`}
-          accent="Library compatibility"
         />
         <MetricCard
           value={`${a11yCount}`}
@@ -91,7 +121,6 @@ export default function BacklogAnalytics({
           variant="controller"
           progress={controllerProgress}
           progressLabel={`${a11yCount}/${totalGames}`}
-          accent="Gamepad-ready count"
         />
       </div>
 
@@ -144,12 +173,21 @@ export default function BacklogAnalytics({
                 currentlyPlaying.map((game) => (
                   <div
                     key={game.appid}
-                    className="rounded-3xl border border-white/10 bg-[#181e26]/80 p-4"
+                    className="flex items-center gap-3 rounded-xl bg-white/5 p-3 transition-colors hover:bg-white/8"
                   >
-                    <p className="font-semibold text-pastel-cream">{game.name}</p>
-                    <p className="mt-2 text-sm text-pastel-lavender/70">
-                      {game.playtimeHours} hrs played • {game.genre}
-                    </p>
+                    <img
+                      src={`https://cdn.akamai.steamstatic.com/steam/apps/${game.appid}/header.jpg`}
+                      alt={game.name}
+                      className="w-24 h-12 object-cover rounded-lg shrink-0"
+                    />
+                    <div className="flex flex-col min-w-0">
+                      <span className="font-medium text-sm truncate text-pastel-cream">
+                        {game.name}
+                      </span>
+                      <span className="text-xs text-white/50">
+                        ⏱️ {game.playtimeHours} hrs played • {game.genre}
+                      </span>
+                    </div>
                   </div>
                 ))
               )}
@@ -167,12 +205,21 @@ export default function BacklogAnalytics({
               {achievementShowcase.map((game) => (
                 <div
                   key={game.appid}
-                  className="rounded-3xl border border-white/10 bg-[#181e26]/80 p-4"
+                  className="flex items-center gap-3 rounded-xl bg-white/5 p-3 transition-colors hover:bg-white/8"
                 >
-                  <p className="font-semibold text-pastel-cream">{game.name}</p>
-                  <p className="mt-1 text-sm text-pastel-lavender/70">
-                    {game.achievementPercent}% complete • {game.playtimeHours} hrs
-                  </p>
+                  <img
+                    src={`https://cdn.akamai.steamstatic.com/steam/apps/${game.appid}/header.jpg`}
+                    alt={game.name}
+                    className="w-24 h-12 object-cover rounded-lg shrink-0"
+                  />
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-medium text-sm truncate text-pastel-cream">
+                      {game.name}
+                    </span>
+                    <span className="text-xs text-white/50">
+                      🏆 {game.achievementPercent}% complete • ⏱️ {game.playtimeHours} hrs
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -191,7 +238,7 @@ export default function BacklogAnalytics({
                       key={genre}
                       className="flex items-center justify-between rounded-3xl border border-white/10 bg-[#181e26]/80 px-4 py-3 text-sm text-pastel-lavender/70"
                     >
-                      <span>{genre}</span>
+                      <span className="min-w-0 truncate">{getGenreLabel(genre)}</span>
                       <span className="font-semibold text-pastel-cream">{count}</span>
                     </div>
                   ))}
@@ -208,7 +255,7 @@ export default function BacklogAnalytics({
                       key={playstyle}
                       className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-pastel-lavender/80"
                     >
-                      {playstyle} • {count}
+                      {getPlaystyleLabel(playstyle)} • {count}
                     </span>
                   ))}
                 </div>
@@ -218,51 +265,6 @@ export default function BacklogAnalytics({
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-3xl border border-white/10 bg-[#202429]/80 p-6">
-          <h3 className="text-lg font-black text-pastel-cream">⏱️ Recent completions</h3>
-          <p className="mt-2 text-sm leading-6 text-pastel-lavender/70">
-            Recent backlog wins based on the most recently played completed games.
-          </p>
-          <div className="mt-4 grid gap-3">
-            {completedGames.length === 0 ? (
-              <div className="rounded-3xl border border-white/10 bg-white/5 p-4 text-sm text-pastel-lavender/70">
-                No completed backlog entries yet.
-              </div>
-            ) : (
-              completedGames.map((game) => (
-                <div
-                  key={game.appid}
-                  className="rounded-3xl border border-white/10 bg-[#181e26]/80 p-4"
-                >
-                  <p className="font-semibold text-pastel-cream">{game.name}</p>
-                  <p className="mt-1 text-sm text-pastel-lavender/70">
-                    Completed {game.lastPlayed} ago • {game.genre}
-                  </p>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
-        <div className="rounded-3xl border border-white/10 bg-[#202429]/80 p-6">
-          <h3 className="text-lg font-black text-pastel-cream">🎯 Playstyle summary</h3>
-          <div className="mt-6 grid gap-3">
-            <div className="rounded-3xl border border-white/10 bg-[#181e26]/80 p-4">
-              <p className="text-sm text-pastel-lavender/70">Library size</p>
-              <p className="mt-2 text-2xl font-black text-pastel-cream">{profile.gamesOwned ?? "Private"}</p>
-            </div>
-            <div className="rounded-3xl border border-white/10 bg-[#181e26]/80 p-4">
-              <p className="text-sm text-pastel-lavender/70">Deck friendly games</p>
-              <p className="mt-2 text-2xl font-black text-pastel-cream">{deckFriendlyCount}</p>
-            </div>
-            <div className="rounded-3xl border border-white/10 bg-[#181e26]/80 p-4">
-              <p className="text-sm text-pastel-lavender/70">Controller supported</p>
-              <p className="mt-2 text-2xl font-black text-pastel-cream">{a11yCount}</p>
-            </div>
-          </div>
-        </div>
-      </div>
     </section>
   );
 }

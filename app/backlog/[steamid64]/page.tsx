@@ -249,7 +249,7 @@ export default async function BacklogPage({
         ) : (
           profile && (
             <>
-              <section className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <section className="mt-8 mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <StatCard value={formatNumber(owned)} label="🎲 Owned" />
                 <StatCard value={formatNumber(unplayed)} label="🌙 Unplayed" />
                 <StatCard value={formatNumber(started)} label="🚧 Started" />
