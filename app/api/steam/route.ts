@@ -105,7 +105,7 @@ export async function GET(request: Request) {
     gamesUrl.searchParams.set("key", apiKey);
     gamesUrl.searchParams.set("steamid", steamId);
 
-    const [playerData, levelData] = await Promise.all([
+    const [playerData, levelData, gamesData] = await Promise.all([
       fetchSteamJson<{
         response?: {
           players?: Array<{
@@ -124,22 +124,12 @@ export async function GET(request: Request) {
           player_level?: number;
         };
       }>(levelUrl.toString(), "Unable to fetch Steam level"),
-    ]);
-
-    let gamesOwned: number | null = null;
-
-    try {
-      const gamesData = await fetchSteamJson<{
+      fetchSteamJson<{
         response?: {
           game_count?: number;
         };
-      }>(gamesUrl.toString(), "Unable to fetch owned games from Steam");
-
-      gamesOwned = gamesData.response?.game_count ?? null;
-    } catch (gamesError) {
-      console.warn("Could not fetch owned games", gamesError);
-      gamesOwned = null;
-    }
+      }>(gamesUrl.toString(), "Unable to fetch owned games"),
+    ]);
 
     const player = playerData.response?.players?.[0];
 
@@ -161,7 +151,7 @@ export async function GET(request: Request) {
       visibility: player.communityvisibilitystate ?? null,
       created: player.timecreated ?? null,
       level: levelData.response?.player_level ?? null,
-      gamesOwned,
+      gamesOwned: gamesData.response?.game_count ?? null,
     });
   } catch (error) {
     console.error(error);

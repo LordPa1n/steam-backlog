@@ -1,209 +1,19 @@
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import BacklogTabs from "./BacklogTabs";
-import SteamOracle from "./SteamOracle";
-
-type OwnedGame = {
-  appid: number;
-  name?: string;
-  playtime_forever?: number;
-};
-
-type OwnedGamesResponse = {
-  response?: {
-    game_count?: number;
-    games?: OwnedGame[];
-  };
-};
-
-type GameRow = {
-  appid: number;
-  name: string;
-  thumbnailUrl: string;
-  genre: string;
-  hoursToBeat: number;
-  playtimeHours: number;
-  achievementPercent: number;
-  reviewPercent: number;
-  reviewCategory: string;
-};
-
-const genres = [
-  "Action",
-  "Adventure",
-  "RPG",
-  "Puzzle",
-  "Strategy",
-  "Shooter",
-  "Story",
-  "Roguelike",
-];
+import PlayNextSection from "./PlayNext";
+import RandomGameSelector from "./RandomGameSelector";
+import ProfileBanner from "./ProfileBanner";
+import BacklogAnalytics from "./BacklogAnalytics";
+import {
+  getBacklog,
+  getSteamProfile,
+  type GameRow,
+  type SteamProfileSummary,
+} from "@/lib/steam";
 
 function formatNumber(value: number) {
   return new Intl.NumberFormat().format(value);
-}
-
-function gameSeed(appid: number) {
-  return Math.abs(Math.sin(appid) * 10000);
-}
-
-function enrichGame(game: OwnedGame): GameRow {
-  const seed = gameSeed(game.appid);
-  const playtimeHours = Math.round(((game.playtime_forever ?? 0) / 60) * 10) / 10;
-  const reviewPercent = 65 + (Math.floor(seed * 11) % 36); // 65-100
-  const reviewCategory =
-    reviewPercent >= 90
-      ? "Overwhelmingly Positive"
-      : reviewPercent >= 80
-      ? "Very Positive"
-      : reviewPercent >= 70
-      ? "Positive"
-      : "Mixed";
-
-  return {
-    appid: game.appid,
-    name: game.name || `Steam App ${game.appid}`,
-    thumbnailUrl: `https://cdn.cloudflare.steamstatic.com/steam/apps/${game.appid}/capsule_184x69.jpg`,
-    genre: genres[Math.floor(seed) % genres.length],
-    hoursToBeat: 4 + (Math.floor(seed * 7) % 37),
-    playtimeHours,
-    achievementPercent: Math.min(
-      100,
-      Math.max(8, Math.round((playtimeHours / 30) * 100))
-    ),
-    reviewPercent,
-    reviewCategory,
-  };
-}
-
-type PlayerSummaryResponse = {
-  response?: {
-    players?: Array<{
-      steamid?: string;
-      communityvisibilitystate?: number;
-    }>;
-  };
-};
-
-type SteamFetchErrorDetails = {
-  status: number;
-  message: string;
-};
-
-class SteamFetchError extends Error {
-  status: number;
-
-  constructor({ status, message }: SteamFetchErrorDetails) {
-    super(message);
-    this.name = "SteamFetchError";
-    this.status = status;
-  }
-}
-
-async function fetchSteamJson<T>(url: string, fallbackMessage: string) {
-  const response = await fetch(url, {
-    cache: "no-store",
-  });
-
-  if (!response.ok) {
-    throw new SteamFetchError({
-      status: response.status,
-      message: fallbackMessage,
-    });
-  }
-
-  try {
-    return (await response.json()) as T;
-  } catch {
-    throw new SteamFetchError({
-      status: 502,
-      message: "Steam returned an unreadable response",
-    });
-  }
-}
-
-async function getBacklog(steamid64: string) {
-  const apiKey = process.env.STEAM_API_KEY;
-
-  if (!apiKey) {
-    return {
-      error: "Steam API key is not configured",
-      games: [] as GameRow[],
-      owned: 0,
-    };
-  }
-
-  const playerUrl = new URL(
-    "https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/"
-  );
-  playerUrl.searchParams.set("key", apiKey);
-  playerUrl.searchParams.set("steamids", steamid64);
-
-  const gamesUrl = new URL(
-    "https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/"
-  );
-  gamesUrl.searchParams.set("key", apiKey);
-  gamesUrl.searchParams.set("steamid", steamid64);
-  gamesUrl.searchParams.set("include_appinfo", "true");
-  gamesUrl.searchParams.set("include_played_free_games", "true");
-
-  try {
-    const [playerData, gamesData] = await Promise.all([
-      fetchSteamJson<PlayerSummaryResponse>(playerUrl.toString(), "Unable to fetch Steam profile"),
-      fetchSteamJson<OwnedGamesResponse>(gamesUrl.toString(), "Unable to fetch owned games from Steam"),
-    ]);
-
-    const player = playerData.response?.players?.[0];
-
-    if (!player) {
-      return {
-        error: "Player not found",
-        games: [] as GameRow[],
-        owned: 0,
-      };
-    }
-
-    if (player.communityvisibilitystate !== 3) {
-      return {
-        error: "Backlog analysis requires a public Steam profile. This account is not visible.",
-        games: [] as GameRow[],
-        owned: 0,
-      };
-    }
-
-    if (gamesData.response?.game_count == null) {
-      return {
-        error: "Game library is private or unavailable. Backlog analysis requires visible owned games.",
-        games: [] as GameRow[],
-        owned: 0,
-      };
-    }
-
-    const games = (gamesData.response.games ?? []).map(enrichGame);
-
-    return {
-      error: "",
-      games,
-      owned: gamesData.response.game_count,
-    };
-  } catch (error) {
-    console.error(error);
-
-    if (error instanceof SteamFetchError) {
-      return {
-        error: error.message,
-        games: [] as GameRow[],
-        owned: 0,
-      };
-    }
-
-    return {
-      error: "Failed to analyze backlog",
-      games: [] as GameRow[],
-      owned: 0,
-    };
-  }
 }
 
 function StatCard({ value, label }: { value: string | number; label: string }) {
@@ -301,47 +111,6 @@ function PlaytimeDonut({
   );
 }
 
-function PlayNext({ games }: { games: GameRow[] }) {
-  return (
-    <section className="rounded-3xl border border-white/10 bg-[#181b1f]/80 p-6 shadow-2xl shadow-black/20 ring-1 ring-pastel-sky/10">
-      <p className="text-sm font-bold uppercase tracking-wider text-pastel-peach">
-        🎮 Games You Should Play Next
-      </p>
-      <h2 className="mt-2 text-2xl font-black text-pastel-cream">
-        🎯 Play Next
-      </h2>
-      <ol className="mt-6 grid gap-3">
-        {games.length === 0 ? (
-          <li className="rounded-2xl border border-dashed border-white/10 bg-white/5 p-4 text-sm text-pastel-lavender/70">
-            No recommendations available yet.
-          </li>
-        ) : (
-          games.map((game, index) => (
-            <li
-              key={game.appid}
-              className="flex items-center gap-4 rounded-2xl border border-white/10 bg-[#202429]/65 p-4"
-            >
-              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-pastel-peach/20 text-sm font-black text-pastel-peach">
-                {index + 1}
-              </span>
-              <Image
-                src={game.thumbnailUrl}
-                alt=""
-                width={184}
-                height={69}
-                className="h-12 w-24 shrink-0 rounded-lg object-cover ring-1 ring-white/10"
-              />
-              <span className="min-w-0 truncate font-bold text-pastel-cream">
-                {game.name}
-              </span>
-            </li>
-          ))
-        )}
-      </ol>
-    </section>
-  );
-}
-
 export default async function BacklogPage({
   params,
 }: {
@@ -353,7 +122,40 @@ export default async function BacklogPage({
     notFound();
   }
 
-  const { error, games, owned } = await getBacklog(steamid64);
+  const [profileResult, backlogResult] = await Promise.allSettled([
+    getSteamProfile(steamid64),
+    getBacklog(steamid64),
+  ]);
+
+  let profile: SteamProfileSummary | null = null;
+  let profileError = "";
+
+  if (profileResult.status === "fulfilled") {
+    profile = profileResult.value;
+  } else {
+    profileError =
+      profileResult.reason instanceof Error
+        ? profileResult.reason.message
+        : String(profileResult.reason ?? "Unable to fetch Steam profile.");
+  }
+
+  const backlogData =
+    backlogResult.status === "fulfilled"
+      ? backlogResult.value
+      : {
+          error:
+            backlogResult.reason instanceof Error
+              ? backlogResult.reason.message
+              : String(backlogResult.reason ?? "Unable to fetch backlog."),
+          games: [] as GameRow[],
+          owned: 0,
+        };
+
+  const errorMessage = profileError || backlogData.error;
+  const isPrivateProfile = profile?.visibility !== 3;
+
+  const games = backlogData.games;
+  const owned = backlogData.owned;
   const unplayedGames = games.filter((game) => game.playtimeHours === 0);
   const startedGames = games
     .filter((game) => game.playtimeHours > 0 && game.playtimeHours < 20)
@@ -402,7 +204,7 @@ export default async function BacklogPage({
       <CompletionScore score={completionScore} />
       <PlaytimeDonut buckets={buckets} />
       <div className="lg:col-span-2">
-        <PlayNext games={playNextGames} />
+        <PlayNextSection games={playNextGames} />
       </div>
     </div>
   );
@@ -429,29 +231,48 @@ export default async function BacklogPage({
           </p>
         </header>
 
-        {error && (
+        {profile ? <ProfileBanner profile={profile} /> : null}
+
+        {errorMessage ? (
           <div className="mt-6 rounded-2xl border border-pastel-rose/35 bg-pastel-rose/10 p-4 text-sm text-pastel-rose ring-1 ring-pastel-rose/20">
-            ⚠️ {error}
+            ⚠️ {errorMessage}
           </div>
+        ) : null}
+
+        {profile && isPrivateProfile ? (
+          <div className="mt-8 rounded-3xl border border-white/10 bg-[#202429]/75 p-8 shadow-2xl shadow-black/20 ring-1 ring-white/5">
+            <p className="text-xl font-black text-pastel-cream">Profile visibility blocked</p>
+            <p className="mt-3 text-sm leading-7 text-pastel-lavender/75">
+              Backlog analysis is unavailable because this Steam profile is not publicly visible. Make the profile public or share a SteamID64 with visible game details to unlock analytics.
+            </p>
+          </div>
+        ) : (
+          profile && (
+            <>
+              <section className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <StatCard value={formatNumber(owned)} label="🎲 Owned" />
+                <StatCard value={formatNumber(unplayed)} label="🌙 Unplayed" />
+                <StatCard value={formatNumber(started)} label="🚧 Started" />
+                <StatCard value={formatNumber(finished)} label="🏆 Finished" />
+              </section>
+
+              <BacklogAnalytics profile={profile} games={games} />
+
+              <div className="mt-8">
+                <BacklogTabs
+                  overview={overview}
+                  unplayedGames={unplayedGames}
+                  startedGames={startedGames}
+                  completedGames={completedGames}
+                />
+              </div>
+
+              <div className="mt-8">
+                <RandomGameSelector games={games} />
+              </div>
+            </>
+          )
         )}
-
-        <section className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard value={formatNumber(owned)} label="🎲 Owned" />
-          <StatCard value={formatNumber(unplayed)} label="🌙 Unplayed" />
-          <StatCard value={formatNumber(started)} label="🚧 Started" />
-          <StatCard value={formatNumber(finished)} label="🏆 Finished" />
-        </section>
-
-        <div className="mt-6">
-          <SteamOracle games={games} />
-        </div>
-
-        <BacklogTabs
-          overview={overview}
-          unplayedGames={unplayedGames}
-          startedGames={startedGames}
-          completedGames={completedGames}
-        />
       </div>
     </main>
   );
