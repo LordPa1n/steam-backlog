@@ -51,6 +51,23 @@ function shuffleGames(games: GameRow[]) {
   return [...games].sort(() => Math.random() - 0.5);
 }
 
+function buildSpinSequence(finalGame: GameRow, games: GameRow[], length: number) {
+  const sequence: GameRow[] = [];
+  const pool = games.filter((game) => game.appid !== finalGame.appid);
+
+  for (let i = 0; i < length - 1; i += 1) {
+    if (pool.length === 0) {
+      sequence.push(finalGame);
+      continue;
+    }
+    const pick = pool[Math.floor(Math.random() * pool.length)];
+    sequence.push(pick);
+  }
+
+  sequence.push(finalGame);
+  return sequence;
+}
+
 export default function RandomGameSelector({ games }: { games: GameRow[] }) {
   const genres = useMemo(() => ["All", ...Array.from(new Set(games.map((game) => game.genre))).sort()], [games]);
   const ratings = ["Any", "70", "80", "90"];
@@ -69,6 +86,11 @@ export default function RandomGameSelector({ games }: { games: GameRow[] }) {
   const [sortBy, setSortBy] = useState<SortOption>("random");
   const [selected, setSelected] = useState<GameRow | null>(null);
   const [spinning, setSpinning] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [spinItems, setSpinItems] = useState<GameRow[]>([]);
+  const [currentSpinIndex, setCurrentSpinIndex] = useState(0);
+  const [showReveal, setShowReveal] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
   const filteredGames = useMemo(() => {
     return games.filter((game) => {
@@ -113,28 +135,62 @@ export default function RandomGameSelector({ games }: { games: GameRow[] }) {
   const availableCount = sortedGames.length;
 
   useEffect(() => {
-    if (spinning) {
-      const spinDuration = 1200;
-      const interval = 75;
-      let elapsed = 0;
-      const spin = setInterval(() => {
-        setSelected(pickRandomGame(sortedGames));
-        elapsed += interval;
-        if (elapsed >= spinDuration) {
-          clearInterval(spin);
-          setSpinning(false);
-        }
-      }, interval);
-      return () => clearInterval(spin);
-    }
-  }, [spinning, sortedGames]);
+    if (typeof window === "undefined") return;
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setPrefersReducedMotion(media.matches);
+    const handler = (event: MediaQueryListEvent) => setPrefersReducedMotion(event.matches);
+    media.addEventListener("change", handler);
+    return () => media.removeEventListener("change", handler);
+  }, []);
+
+  useEffect(() => {
+    if (!spinning || spinItems.length === 0) return;
+
+    const duration = prefersReducedMotion ? 100 : 2500;
+    const start = performance.now();
+    let requestId: number;
+
+    const animate = (timestamp: number) => {
+      const elapsed = Math.min(timestamp - start, duration);
+      const progress = elapsed / duration;
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const index = Math.min(spinItems.length - 1, Math.floor(eased * (spinItems.length - 1)));
+
+      setCurrentSpinIndex(index);
+
+      if (elapsed < duration) {
+        requestId = requestAnimationFrame(animate);
+      } else {
+        setSelected(spinItems[spinItems.length - 1]);
+        setShowReveal(true);
+        setSpinning(false);
+      }
+    };
+
+    requestId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(requestId);
+  }, [spinning, spinItems, prefersReducedMotion]);
 
   function handlePick() {
-    if (availableCount === 0) return;
-    setSpinning(true);
+    if (availableCount === 0 || spinning || loading) return;
+
+    const target = pickRandomGame(sortedGames);
+    if (!target) return;
+
+    const steps = Math.min(12, Math.max(8, Math.floor(Math.random() * 5) + 8));
+    const sequence = buildSpinSequence(target, sortedGames, steps);
+
+    setSelected(null);
+    setShowReveal(false);
+    setSpinItems(sequence);
+    setCurrentSpinIndex(0);
+    setLoading(true);
+
+    const startupDelay = prefersReducedMotion ? 0 : 240;
     setTimeout(() => {
-      setSelected(pickRandomGame(sortedGames));
-    }, 1200);
+      setLoading(false);
+      setSpinning(true);
+    }, startupDelay);
   }
 
   return (
@@ -153,10 +209,10 @@ export default function RandomGameSelector({ games }: { games: GameRow[] }) {
         <button
           type="button"
           onClick={handlePick}
-          disabled={availableCount === 0 || spinning}
-          className="inline-flex items-center justify-center rounded-3xl border border-pastel-mint/30 bg-gradient-to-r from-pastel-mint/90 to-pastel-sky/70 px-6 py-3 text-sm font-black text-[#111827] shadow-lg shadow-pastel-mint/10 transition hover:from-pastel-mint/100 hover:to-pastel-sky/90 disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={availableCount === 0 || spinning || loading}
+          className="inline-flex items-center justify-center rounded-3xl border border-pastel-mint/30 bg-linear-to-r from-pastel-mint/90 to-pastel-sky/70 px-6 py-3 text-sm font-black text-[#111827] shadow-lg shadow-pastel-mint/10 transition hover:from-pastel-mint hover:to-pastel-sky/90 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          🎲 Pick My Next Game
+          🎲 {loading || spinning ? "Spinning..." : "Pick My Next Game"}
         </button>
       </div>
 
@@ -317,17 +373,65 @@ export default function RandomGameSelector({ games }: { games: GameRow[] }) {
         </div>
 
         <div className="rounded-3xl border border-white/10 bg-[#14181d]/85 p-4 ring-1 ring-white/5">
-          <div className="rounded-3xl border border-white/10 bg-[#181e26]/80 p-4 shadow-inner shadow-black/20">
-            {selected ? (
+          <div className="rounded-3xl border border-white/10 bg-[#181e26]/80 p-4 shadow-inner shadow-black/20 transition-all duration-500">
+            {loading ? (
               <div className="space-y-4">
-                <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#20252d]/95 p-4 shadow-xl shadow-black/20">
+                <div className="rounded-3xl border border-white/10 bg-[#20252d]/95 p-4 shadow-xl shadow-black/15 animate-pulse">
+                  <div className="h-40 w-full rounded-3xl bg-white/10" />
+                </div>
+                <div className="space-y-3">
+                  <div className="h-6 w-40 rounded-full bg-white/10" />
+                  <div className="h-5 w-3/5 rounded-full bg-white/10" />
+                  <div className="grid gap-3 rounded-3xl border border-white/10 bg-[#202429]/80 p-4">
+                    <div className="h-4 w-24 rounded-full bg-white/10" />
+                    <div className="h-4 w-full rounded-full bg-white/10" />
+                    <div className="h-4 w-5/6 rounded-full bg-white/10" />
+                  </div>
+                </div>
+                <p className="text-center text-sm text-pastel-lavender/60">
+                  Searching your library<span className="typing-dots">...</span>
+                </p>
+              </div>
+            ) : spinning ? (
+              <div className="space-y-4">
+                <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#20252d]/95 p-4 shadow-xl shadow-black/20 ring-2 ring-white/5">
                   <Image
-                    src={selected.thumbnailUrl}
-                    alt={selected.name}
+                    src={spinItems[currentSpinIndex]?.thumbnailUrl || ""}
+                    alt={spinItems[currentSpinIndex]?.name || "Spinning game"}
                     width={332}
                     height={186}
-                    className={`h-40 w-full rounded-3xl object-cover transition duration-500 ${spinning ? "scale-105 opacity-80" : "scale-100 opacity-100"}`}
+                    className="h-40 w-full rounded-3xl object-cover transition-transform duration-300 ease-out"
                   />
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm uppercase tracking-[0.24em] text-pastel-peach">Spinning...</p>
+                      <h3 className="mt-2 text-xl font-black text-pastel-cream truncate">
+                        {spinItems[currentSpinIndex]?.name || "Preparing your pick"}
+                      </h3>
+                    </div>
+                    <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-pastel-lavender/70">
+                      🎰 Rolling
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : selected ? (
+              <div className="space-y-4">
+                <div className="relative overflow-hidden rounded-3xl border border-transparent bg-linear-to-br from-pastel-sky/10 via-white/10 to-pastel-mint/10 p-1 shadow-[0_30px_80px_-45px_rgba(56,189,248,0.8)]">
+                  <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#20252d]/95 p-4 shadow-xl shadow-black/20 animate-card-reveal">
+                    <Image
+                      src={selected.thumbnailUrl}
+                      alt={selected.name}
+                      width={332}
+                      height={186}
+                      className="h-40 w-full rounded-3xl object-cover"
+                    />
+                    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                      <span className="absolute left-[-30%] top-1/2 h-2 w-24 rounded-full bg-white/30 shadow-[0_0_20px_10px_rgba(255,255,255,0.4)] blur-xl animate-shimmer" />
+                    </div>
+                  </div>
                 </div>
                 <div className="space-y-3">
                   <div className="flex items-start justify-between gap-3">
@@ -340,8 +444,8 @@ export default function RandomGameSelector({ games }: { games: GameRow[] }) {
                     </span>
                   </div>
 
-                  <div className="grid gap-2 rounded-3xl border border-white/10 bg-[#202429]/80 p-4">
-                    <div className="flex flex-wrap gap-3 text-sm text-pastel-lavender/75">
+                  <div className="grid gap-2 rounded-3xl border border-white/10 bg-[#202429]/80 p-4 text-sm text-pastel-lavender/75">
+                    <div className="flex flex-wrap gap-3">
                       <span>⭐ {selected.reviewPercent}%</span>
                       <span>⏱️ {selected.playtimeHours} hrs</span>
                       <span>🧩 {selected.genre}</span>
@@ -356,10 +460,21 @@ export default function RandomGameSelector({ games }: { games: GameRow[] }) {
                     </div>
                   </div>
                 </div>
+                {showReveal && (
+                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                    <div className="absolute inset-0 rounded-3xl bg-[radial-gradient(circle_at_center,rgba(56,189,248,0.18),transparent_60%)] opacity-0 animate-glow-pulse" />
+                    <div className="absolute inset-0 rounded-3xl opacity-0" />
+                  </div>
+                )}
               </div>
             ) : (
-              <div className="flex min-h-[18rem] items-center justify-center rounded-3xl border border-dashed border-white/10 bg-white/5 p-6 text-center text-sm text-pastel-lavender/70">
-                Pick a game to reveal a random recommendation and see the result here.
+              <div className="flex min-h-72 flex-col items-center justify-center rounded-3xl border border-dashed border-white/10 bg-white/5 p-6 text-center text-sm text-pastel-lavender/70">
+                <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full border border-white/15 bg-white/5 text-4xl text-pastel-peach">
+                  🎲
+                </div>
+                <p className="text-base font-semibold text-pastel-cream">
+                  Click the button above to discover your next adventure
+                </p>
               </div>
             )}
           </div>
